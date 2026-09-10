@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hẹn giờ luộc trứng cho Sibun</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito+Sans:ital,wght@0,400;0,600;0,700;1,600&display=swap');
+
+  :root{
+    --shell: #FBF3E3;
+    --shell-deep: #F3E6CB;
+    --yolk: #F3AE3D;
+    --yolk-deep: #E0932A;
+    --toast: #8B5A2B;
+    --ink: #3A2E22;
+    --ink-soft: #6B5B47;
+    --candle: #E8836A;
+    --pot: #5C6F6A;
+    --pot-dark: #435049;
+    --water: #A9CDE0;
+    --timer-color: #2E1B0E;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    overflow-x: hidden;
+    position: relative;
+    background:
+      radial-gradient(circle at 20% -10%, #FFF7E8 0%, transparent 45%),
+      linear-gradient(180deg, var(--shell) 0%, var(--shell-deep) 100%);
+    font-family:'Nunito Sans', sans-serif;
+    color: var(--ink);
+    display:flex;
+    justify-content:center;
+    padding: 40px 18px 60px;
+  }
+
+  .page{
+    width:100%;
+    max-width: 460px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom: 22px;
+  }
+
+  .eyebrow-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+
+  .candle-icon{ width:18px; height:18px; flex-shrink:0; }
+
+  h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size: 30px;
+    line-height:1.15;
+    margin: 0 0 8px;
+    letter-spacing: -0.3px;
+  }
+
+  .sub{
+    font-size:15px;
+    color: var(--ink-soft);
+    margin:0;
+    line-height:1.5;
+    padding: 0 10px;
+  }
+
+  /* ---- Full-page monkey monogram pattern ---- */
+  .monogram-bg{
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .page{
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---- Pot & egg scene ---- */
+  .scene{
+    position:relative;
+    width: 240px;
+    height: 240px;
+    margin: 10px auto 6px;
+  }
+
+  .ring-track, .ring-progress{
+    fill:none;
+    stroke-width: 10;
+  }
+  .ring-track{ stroke: #E7D8B9; }
+  .ring-progress{
+    stroke: var(--yolk);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+  }
+
+  .pot{
+    position:absolute;
+    left:50%; top:50%;
+    transform: translate(-50%,-50%);
+    width: 150px;
+    height: 150px;
+  }
+
+  .steam{
+    position:absolute;
+    width: 6px;
+    background: rgba(255,255,255,0.65);
+    border-radius: 6px;
+    opacity: 0;
+    filter: blur(0.5px);
+  }
+  .steam1{ left: 96px; top: 20px; height: 22px; animation: steamRise 2.6s ease-in infinite; }
+  .steam2{ left: 118px; top: 26px; height: 18px; animation: steamRise 2.6s ease-in infinite 0.9s; }
+  .steam3{ left: 138px; top: 22px; height: 20px; animation: steamRise 2.6s ease-in infinite 1.7s; }
+
+  @keyframes steamRise{
+    0%   { opacity:0; transform: translateY(0) scaleX(1); }
+    20%  { opacity:0.8; }
+    80%  { opacity:0.3; }
+    100% { opacity:0; transform: translateY(-26px) scaleX(1.6); }
+  }
+  .scene.running .steam{ animation-play-state: running; }
+  .scene:not(.running) .steam{ animation-play-state: paused; opacity:0; }
+
+  .status-chip{
+    position:absolute;
+    left:50%; top:50%;
+    transform: translate(-50%,-50%);
+    text-align:center;
+    pointer-events:none;
+    background: rgba(255,251,240,0.88);
+    border-radius: 999px;
+    padding: 10px 18px;
+    box-shadow: 0 2px 10px rgba(58,46,34,0.08);
+  }
+  .time-left{
+    font-family:'Baloo 2', sans-serif;
+    font-size: 40px;
+    font-weight:800;
+    line-height:1;
+    color: var(--timer-color);
+    font-variant-numeric: tabular-nums;
+  }
+  .time-label{
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    font-weight:600;
+  }
+
+  /* ---- Doneness picker ---- */
+  .picker{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 22px 0 4px;
+  }
+
+  .egg-btn{
+    background: #fff;
+    border: 2px solid #E7D8B9;
+    border-radius: 16px;
+    padding: 10px 4px 8px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    transition: border-color .18s ease, transform .12s ease, box-shadow .18s ease;
+    font-family:'Nunito Sans', sans-serif;
+  }
+  .egg-btn:hover{ transform: translateY(-2px); }
+  .egg-btn.active{
+    border-color: var(--yolk);
+    box-shadow: 0 4px 14px rgba(224,147,42,0.28);
+    background: #FFFBF3;
+  }
+  .egg-btn svg{ width: 30px; height: 36px; }
+  .egg-btn .name{
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+    text-align:center;
+    line-height:1.2;
+  }
+  .egg-btn .mins{
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight:600;
+  }
+
+  /* ---- Custom time ---- */
+  .custom-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 14px;
+    margin: 18px 0 8px;
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fff;
+    border:2px solid #E7D8B9;
+    border-radius: 999px;
+    padding: 6px 8px;
+  }
+  .stepper button{
+    width:30px; height:30px;
+    border-radius:50%;
+    border:none;
+    background: var(--shell-deep);
+    color: var(--toast);
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: background .15s ease;
+  }
+  .stepper button:hover{ background:#E9D6AE; }
+  .stepper .custom-time{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:17px;
+    min-width: 64px;
+    text-align:center;
+  }
+
+  /* ---- Controls ---- */
+  .controls{
+    display:flex;
+    gap:10px;
+    margin-top: 18px;
+  }
+  .btn{
+    flex:1;
+    border:none;
+    border-radius: 14px;
+    padding: 14px 10px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    transition: transform .12s ease, opacity .15s ease, background .15s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{
+    background: var(--yolk);
+    color: #4A2E0A;
+    box-shadow: 0 6px 16px rgba(224,147,42,0.35);
+  }
+  .btn-primary:hover{ background: var(--yolk-deep); }
+  .btn-primary:disabled{ opacity:0.45; cursor:not-allowed; box-shadow:none; }
+  .btn-ghost{
+    background: transparent;
+    color: var(--ink-soft);
+    border: 2px solid #E7D8B9;
+  }
+  .btn-ghost:hover{ border-color: var(--candle); color: var(--candle); }
+
+  .btn-stop{
+    width:100%;
+    margin-top: 14px;
+    background: var(--candle);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(232,131,106,0.4);
+    animation: stopPulse 1.4s ease-in-out infinite;
+  }
+  .btn-stop:hover{ background: #DD6F52; }
+  @keyframes stopPulse{
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .btn-stop{ animation:none !important; }
+  }
+
+  .message{
+    margin-top: 16px;
+    text-align:center;
+    font-size: 14px;
+    color: var(--ink-soft);
+    min-height: 20px;
+    line-height:1.5;
+  }
+  .message.done{
+    color: var(--candle);
+    font-weight:700;
+  }
+
+  .note{
+    margin-top: 26px;
+    background: #FFFDF7;
+    border: 1.5px dashed #E7D8B9;
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height:1.55;
+  }
+  .note b{ color: var(--ink); }
+
+  .scene.celebrate .time-left{
+    animation: popScale 0.9s ease;
+  }
+  .scene.celebrate .ring-progress{
+    animation: ringFlash 0.9s ease;
+  }
+  @keyframes popScale{
+    0%   { transform: scale(1); }
+    25%  { transform: scale(1.18); color: var(--candle); }
+    50%  { transform: scale(0.98); }
+    100% { transform: scale(1); }
+  }
+  @keyframes ringFlash{
+    0%, 100% { stroke: var(--yolk); }
+    40% { stroke: var(--candle); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .steam{ animation: none !important; }
+    .ring-progress{ transition:none; }
+    .scene.celebrate .time-left, .scene.celebrate .ring-progress{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="monogram-bg" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <pattern id="monkeyPattern" width="210" height="210" patternUnits="userSpaceOnUse" patternTransform="rotate(14)">
+      <g opacity="0.10">
+        <!-- ears -->
+        <circle cx="47" cy="32" r="7" fill="#8B5A2B"/>
+        <circle cx="79" cy="32" r="7" fill="#8B5A2B"/>
+        <circle cx="47" cy="32" r="3.6" fill="#F2DDBB"/>
+        <circle cx="79" cy="32" r="3.6" fill="#F2DDBB"/>
+        <!-- head -->
+        <circle cx="63" cy="40" r="17" fill="#A9733F"/>
+        <!-- face patch -->
+        <ellipse cx="63" cy="44.5" rx="10.5" ry="9" fill="#F2DDBB"/>
+        <!-- eyes + mouth -->
+        <circle cx="59" cy="42" r="1.7" fill="#3A2E22"/>
+        <circle cx="67" cy="42" r="1.7" fill="#3A2E22"/>
+        <path d="M58 48 Q63 51 68 48" fill="none" stroke="#3A2E22" stroke-width="1.2" stroke-linecap="round"/>
+        <!-- hair tuft -->
+        <path d="M56 24 Q63 18 70 24" fill="none" stroke="#8B5A2B" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <text x="63" y="72" font-family="'Baloo 2', sans-serif" font-weight="800" font-size="10.5"
+        fill="#8B5A2B" opacity="0.14" text-anchor="middle" letter-spacing="1">SOOBIN</text>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#monkeyPattern)"/>
+</svg>
+
+<div class="page">
+  <header>
+    <div class="eyebrow-wrap">
+      <svg class="candle-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2c1.2 1.6 1.6 2.7 1.6 3.6 0 1-0.7 1.6-1.6 1.6s-1.6-0.6-1.6-1.6C10.4 4.7 10.8 3.6 12 2z" fill="#E8836A"/><rect x="10.6" y="7" width="2.8" height="4" rx="0.6" fill="#F3AE3D"/></svg>
+      <span style="font-size:13px; font-weight:700; color: var(--candle);">Luộc trứng đón sinh nhật<br> by LinhChee</span>
+    </div>
+    <h1>Bếp trứng cho SOOBIN</h1>
+    <p class="sub">Sibun hãy chọn kiểu trứng yêu thích, bấm Bắt đầu<br>Công chúa sẽ báo đúng lúc để Sibun không luộc quá tay.</p>
+  </header>
+
+  <div class="scene" id="scene">
+    <svg viewBox="0 0 240 240" width="240" height="240" style="position:absolute; left:0; top:0;">
+      <circle class="ring-track" cx="120" cy="120" r="108"></circle>
+      <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="108"
+        stroke-dasharray="678.6" stroke-dashoffset="0"
+        transform="rotate(-90 120 120)"></circle>
+    </svg>
+
+    <div class="pot" id="potIcon">
+      <div class="steam steam1"></div>
+      <div class="steam steam2"></div>
+      <div class="steam steam3"></div>
+
+     
+      <svg viewBox="0 0 150 150" width="150" height="150">
+        <!-- pot body, simple and flat -->
+        <path d="M28 64 h94 v40 a47 47 0 0 1 -94 0 z" fill="#6B8079"/>
+        <path d="M28 64 h94 v10 h-94 z" fill="#4E5F58"/>
+        <!-- water -->
+        <path d="M32 70 h86 v8 a43 43 0 0 1 -86 0 z" fill="#B7DCEC" opacity="0.85"/>
+        <!-- plain egg -->
+        <ellipse cx="75" cy="82" rx="15" ry="19" fill="#FFFBF0" stroke="#E7D8B9" stroke-width="1.5"/>
+        <!-- handles -->
+        <rect x="14" y="70" width="12" height="7" rx="3" fill="#4E5F58"/>
+        <rect x="124" y="70" width="12" height="7" rx="3" fill="#4E5F58"/>
+        <!-- lid, plain knob -->
+        <ellipse cx="75" cy="64" rx="48" ry="7" fill="#4E5F58"/>
+        <circle cx="75" cy="52" r="5" fill="#4E5F58"/>
+      </svg>
+    </div>
+
+    <div class="status-chip">
+      <div class="time-left" id="timeLeft">06:00</div>
+      <div class="time-label" id="timeState">Sẵn sàng</div>
+    </div>
+  </div>
+
+  <div class="picker" id="picker">
+    <button class="egg-btn active" data-mins="6">
+      <svg viewBox="0 0 30 36"><ellipse cx="15" cy="19" rx="13" ry="16" fill="#FFF6E0" stroke="#E7D8B9" stroke-width="1.5"/><ellipse cx="15" cy="21" rx="6" ry="6" fill="#F3AE3D"/></svg>
+      <span class="name">Lòng đào</span>
+      <span class="mins">6 phút</span>
+    </button>
+    <button class="egg-btn" data-mins="8">
+      <svg viewBox="0 0 30 36"><ellipse cx="15" cy="19" rx="13" ry="16" fill="#FFF6E0" stroke="#E7D8B9" stroke-width="1.5"/><ellipse cx="15" cy="21" rx="5" ry="5" fill="#E8926A"/></svg>
+      <span class="name">Lòng đào sệt</span>
+      <span class="mins">8 phút</span>
+    </button>
+    <button class="egg-btn" data-mins="10">
+      <svg viewBox="0 0 30 36"><ellipse cx="15" cy="19" rx="13" ry="16" fill="#FFF6E0" stroke="#E7D8B9" stroke-width="1.5"/><ellipse cx="15" cy="21" rx="4" ry="4" fill="#D97E4E"/></svg>
+      <span class="name">Chín tới</span>
+      <span class="mins">10 phút</span>
+    </button>
+    <button class="egg-btn" data-mins="12">
+      <svg viewBox="0 0 30 36"><ellipse cx="15" cy="19" rx="13" ry="16" fill="#FFF6E0" stroke="#E7D8B9" stroke-width="1.5"/></svg>
+      <span class="name">Chín kỹ</span>
+      <span class="mins">12 phút</span>
+    </button>
+  </div>
+
+  <div class="custom-row">
+    <span style="font-size:13px; color:var(--ink-soft); font-weight:600;">Chỉnh riêng:</span>
+    <div class="stepper">
+      <button id="minus" aria-label="Giảm 30 giây">−</button>
+      <span class="custom-time" id="customTime">06:00</span>
+      <button id="plus" aria-label="Tăng 30 giây">+</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="startBtn">Bắt đầu luộc</button>
+    <button class="btn btn-ghost" id="resetBtn">Đặt lại</button>
+  </div>
+
+  <p class="message" id="message"></p>
+
+  <button class="btn btn-stop" id="stopAlarmBtn" style="display:none;">Tắt chuông 🔔</button>
+
+  <div class="note">
+    <b>Mẹo nhỏ cho Sibun:</b> canh thời gian từ lúc nước đã sôi và thả trứng vào, trứng nên để ở nhiệt độ phòng (thu) trước khi luộc để tránh nứt vỏ.<br>
+	<i>Trong thời gian chờ có thể livestream tâm sự với KINGDOM hihi :></i>
+  </div>
+</div>
+
+<script>
+  const picker = document.getElementById('picker');
+  const eggBtns = [...document.querySelectorAll('.egg-btn')];
+  const timeLeftEl = document.getElementById('timeLeft');
+  const timeStateEl = document.getElementById('timeState');
+  const customTimeEl = document.getElementById('customTime');
+  const startBtn = document.getElementById('startBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const messageEl = document.getElementById('message');
+  const scene = document.getElementById('scene');
+  const ringProgress = document.getElementById('ringProgress');
+  const minusBtn = document.getElementById('minus');
+  const plusBtn = document.getElementById('plus');
+  const stopAlarmBtn = document.getElementById('stopAlarmBtn');
+
+  const CIRC = 2 * Math.PI * 108;
+
+  let totalSeconds = 6 * 60;
+  let remaining = totalSeconds;
+  let endTimestamp = null; // real clock time (ms) when the countdown should hit zero
+  let timerId = null;
+  let running = false;
+
+  function fmt(s){
+    const m = Math.floor(s / 60).toString().padStart(2,'0');
+    const sec = (s % 60).toString().padStart(2,'0');
+    return `${m}:${sec}`;
+  }
+
+  function updateDisplay(){
+    timeLeftEl.textContent = fmt(remaining);
+    customTimeEl.textContent = fmt(totalSeconds);
+    const ratio = totalSeconds > 0 ? (remaining / totalSeconds) : 0;
+    ringProgress.style.strokeDashoffset = CIRC * (1 - ratio);
+  }
+
+  function setTotal(seconds){
+    if (running) return;
+    totalSeconds = Math.max(30, Math.min(30*60, seconds));
+    remaining = totalSeconds;
+    updateDisplay();
+  }
+
+  eggBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (running) return;
+      eggBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setTotal(parseInt(btn.dataset.mins,10) * 60);
+      messageEl.textContent = '';
+      messageEl.classList.remove('done');
+    });
+  });
+
+  minusBtn.addEventListener('click', () => {
+    eggBtns.forEach(b => b.classList.remove('active'));
+    setTotal(totalSeconds - 30);
+  });
+  plusBtn.addEventListener('click', () => {
+    eggBtns.forEach(b => b.classList.remove('active'));
+    setTotal(totalSeconds + 30);
+  });
+
+  let audioCtx = null;
+  function getCtx(){
+    if (!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  // "Happy Birthday to you" opening phrase, pitched up so the tune
+  // is clearly recognizable, with a quiet low layer underneath for warmth.
+  const birthdayMelody = [
+    { f: 784.00, d: 0.30 }, // G5  Hap-
+    { f: 784.00, d: 0.22 }, // py
+    { f: 880.00, d: 0.55 }, // A5  Birth-
+    { f: 784.00, d: 0.55 }, // day
+    { f: 1046.50, d: 0.55 }, // C6  to
+    { f: 987.77, d: 1.00 }  // B5  you
+  ];
+
+  function playHappyBirthday(onComplete){
+    try{
+      const ctx = getCtx();
+      const now = ctx.currentTime;
+      const gap = 0.06;
+
+      // shared warm tone: clear sine melody on top, soft triangle
+      // an octave below underneath for body, both filtered slightly
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 3000;
+      filter.Q.value = 0.6;
+      filter.connect(ctx.destination);
+
+      let cursor = 0;
+      let totalDur = 0;
+      birthdayMelody.forEach(note => {
+        const start = cursor;
+        const dur = note.d;
+
+        // main melody note — clear and up front
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sine';
+        osc1.frequency.value = note.f;
+        const gain1 = ctx.createGain();
+        gain1.gain.setValueAtTime(0.0001, now + start);
+        gain1.gain.exponentialRampToValueAtTime(0.4, now + start + 0.02);
+        gain1.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+        osc1.connect(gain1).connect(filter);
+        osc1.start(now + start);
+        osc1.stop(now + start + dur + 0.05);
+
+        // quiet low layer, just for warmth — kept well under the melody
+        const osc2 = ctx.createOscillator();
+        osc2.type = 'triangle';
+        osc2.frequency.value = note.f / 2;
+        const gain2 = ctx.createGain();
+        gain2.gain.setValueAtTime(0.0001, now + start);
+        gain2.gain.exponentialRampToValueAtTime(0.1, now + start + 0.03);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+        osc2.connect(gain2).connect(filter);
+        osc2.start(now + start);
+        osc2.stop(now + start + dur + 0.05);
+
+        cursor += dur + gap;
+        totalDur = cursor;
+      });
+
+      if (onComplete){
+        setTimeout(onComplete, totalDur * 1000);
+      }
+    }catch(e){
+      /* audio not available, silently skip */
+      if (onComplete) setTimeout(onComplete, 2000);
+    }
+  }
+
+  function celebrateFlash(){
+    scene.classList.add('celebrate');
+    setTimeout(() => scene.classList.remove('celebrate'), 900);
+  }
+
+  let alarmActive = false;
+  let alarmTimeoutId = null;
+
+  function alarmLoopStep(){
+    if (!alarmActive) return;
+    celebrateFlash();
+    playHappyBirthday(() => {
+      if (!alarmActive) return;
+      alarmTimeoutId = setTimeout(alarmLoopStep, 700); // short pause before repeating
+    });
+  }
+
+  function startAlarm(){
+    alarmActive = true;
+    stopAlarmBtn.style.display = 'block';
+    alarmLoopStep();
+  }
+
+  function stopAlarm(){
+    alarmActive = false;
+    clearTimeout(alarmTimeoutId);
+    stopAlarmBtn.style.display = 'none';
+  }
+
+  function tick(){
+    // Always recompute from the real clock rather than assuming exactly
+    // 1 second passed since the last tick — this is what lets the timer
+    // "catch up" correctly if the tab was backgrounded or throttled.
+    const secsLeft = Math.max(0, Math.round((endTimestamp - Date.now()) / 1000));
+    if (secsLeft === remaining) return;
+    remaining = secsLeft;
+    updateDisplay();
+
+    if (remaining <= 0){
+      stopTimer();
+      timeStateEl.textContent = 'Xong rồi!';
+      messageEl.textContent = 'SOOBIN ơi!!! Trứng chín rồi — vớt ra và thả vào nước lạnh khoảng 1 phút cho dễ bóc vỏ nhé.';
+      messageEl.classList.add('done');
+      startAlarm();
+    }
+  }
+
+  function startTimer(){
+    if (running) return;
+    running = true;
+    endTimestamp = Date.now() + remaining * 1000;
+    scene.classList.add('running');
+    startBtn.textContent = 'Đang luộc…';
+    startBtn.disabled = true;
+    timeStateEl.textContent = 'Đang luộc';
+    messageEl.textContent = '';
+    messageEl.classList.remove('done');
+    // 250ms tick is just how often we check the clock; accuracy comes
+    // from comparing against endTimestamp, not from the interval itself.
+    timerId = setInterval(tick, 250);
+  }
+
+  function stopTimer(){
+    running = false;
+    scene.classList.remove('running');
+    startBtn.textContent = 'Bắt đầu luộc';
+    startBtn.disabled = false;
+    clearInterval(timerId);
+  }
+
+  // If the tab was backgrounded (throttled) and the person comes back,
+  // recompute immediately instead of waiting for the next interval tick.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && running) tick();
+  });
+
+  startBtn.addEventListener('click', () => {
+    stopAlarm();
+    startTimer();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    stopTimer();
+    stopAlarm();
+    endTimestamp = null;
+    remaining = totalSeconds;
+    timeStateEl.textContent = 'Sẵn sàng';
+    messageEl.textContent = '';
+    messageEl.classList.remove('done');
+    updateDisplay();
+  });
+
+  stopAlarmBtn.addEventListener('click', () => {
+    stopAlarm();
+    timeStateEl.textContent = 'Đã xong';
+  });
+
+  updateDisplay();
+</script>
+
+</body>
+</html>
