@@ -242,6 +242,26 @@
     min-width: 64px;
     text-align:center;
   }
+  .stepper .custom-time-input{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size:17px;
+    min-width: 64px;
+    text-align:center;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    padding: 2px 4px;
+    border-radius: 8px;
+    transition: background .15s ease;
+  }
+  .stepper .custom-time-input:focus{
+    background: var(--shell-deep);
+  }
+  .stepper .custom-time-input:disabled{
+    color: var(--ink-soft);
+  }
 
   /* ---- Controls ---- */
   .controls{
@@ -374,10 +394,11 @@
   <header>
     <div class="eyebrow-wrap">
       <svg class="candle-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2c1.2 1.6 1.6 2.7 1.6 3.6 0 1-0.7 1.6-1.6 1.6s-1.6-0.6-1.6-1.6C10.4 4.7 10.8 3.6 12 2z" fill="#E8836A"/><rect x="10.6" y="7" width="2.8" height="4" rx="0.6" fill="#F3AE3D"/></svg>
-      <span style="font-size:13px; font-weight:700; color: var(--candle);">Luộc trứng đón sinh nhật<br> by LinhChee</span>
+      <span style="font-size:15px; font-weight:700; color: var(--candle);">Luộc trứng đón sinh nhật<br>by LinhChee</span> 
+	 
     </div>
     <h1>Bếp trứng cho SOOBIN</h1>
-    <p class="sub">Sibun hãy chọn kiểu trứng yêu thích, bấm Bắt đầu<br>Công chúa sẽ báo đúng lúc để Sibun không luộc quá tay.</p>
+    <p class="sub">Sibun hãy chọn kiểu trứng yêu thích, bấm bắt đầu<br>Công chúa sẽ báo đúng lúc để Sibun không luộc quá tay.</p>
   </header>
 
   <div class="scene" id="scene">
@@ -393,7 +414,13 @@
       <div class="steam steam2"></div>
       <div class="steam steam3"></div>
 
-     
+      <!--
+        MUỐN ĐỔI HÌNH NỒI?
+        Cách 1 (nhanh nhất): xoá toàn bộ khối <svg>...</svg> bên dưới,
+        thay bằng: <img src="LINK_ANH_CUA_BAN" style="width:150px;height:150px;" alt="pot">
+        Có thể lấy icon miễn phí tại flaticon.com, icons8.com, hoặc dùng emoji.
+        Cách 2: sửa trực tiếp các thẻ path/circle bên dưới nếu biết SVG.
+      -->
       <svg viewBox="0 0 150 150" width="150" height="150">
         <!-- pot body, simple and flat -->
         <path d="M28 64 h94 v40 a47 47 0 0 1 -94 0 z" fill="#6B8079"/>
@@ -444,10 +471,11 @@
     <span style="font-size:13px; color:var(--ink-soft); font-weight:600;">Chỉnh riêng:</span>
     <div class="stepper">
       <button id="minus" aria-label="Giảm 30 giây">−</button>
-      <span class="custom-time" id="customTime">06:00</span>
+      <input type="text" class="custom-time-input" id="customTime" value="06:00" inputmode="numeric" maxlength="5" aria-label="Nhập thời gian dạng phút:giây">
       <button id="plus" aria-label="Tăng 30 giây">+</button>
     </div>
   </div>
+  <p style="text-align:center; font-size:11.5px; color:var(--ink-soft); margin: 4px 0 0;">Có thể gõ trực tiếp dạng phút:giây rồi nhấn Enter</p>
 
   <div class="controls">
     <button class="btn btn-primary" id="startBtn">Bắt đầu luộc</button>
@@ -459,8 +487,8 @@
   <button class="btn btn-stop" id="stopAlarmBtn" style="display:none;">Tắt chuông 🔔</button>
 
   <div class="note">
-    <b>Mẹo nhỏ cho Sibun:</b> canh thời gian từ lúc nước đã sôi và thả trứng vào, trứng nên để ở nhiệt độ phòng (thu) trước khi luộc để tránh nứt vỏ.<br>
-	<i>Trong thời gian chờ có thể livestream tâm sự với KINGDOM hihi :></i>
+    <b>Mẹo nhỏ cho Sibun:</b> canh thời gian từ lúc nước đã sôi và thả trứng vào, trứng nên để ở nhiệt độ phòng(thu) trước khi luộc để tránh nứt vỏ<br>
+	<b>Trong thời gian chờ Sibun hãy livestream tâm sự với KINGDOM nha :></b>
   </div>
 </div>
 
@@ -495,7 +523,9 @@
 
   function updateDisplay(){
     timeLeftEl.textContent = fmt(remaining);
-    customTimeEl.textContent = fmt(totalSeconds);
+    if (document.activeElement !== customTimeEl){
+      customTimeEl.value = fmt(totalSeconds);
+    }
     const ratio = totalSeconds > 0 ? (remaining / totalSeconds) : 0;
     ringProgress.style.strokeDashoffset = CIRC * (1 - ratio);
   }
@@ -526,6 +556,41 @@
     eggBtns.forEach(b => b.classList.remove('active'));
     setTotal(totalSeconds + 30);
   });
+
+  function parseTimeInput(str){
+    str = str.trim();
+    if (!str) return null;
+    if (str.includes(':')){
+      const [mPart, sPart] = str.split(':');
+      const m = parseInt(mPart, 10);
+      const s = parseInt(sPart, 10);
+      if (isNaN(m) || isNaN(s)) return null;
+      return m * 60 + s;
+    }
+    // plain number typed = treat as minutes (e.g. "8" -> 8:00)
+    const n = parseInt(str, 10);
+    if (isNaN(n)) return null;
+    return n * 60;
+  }
+
+  function applyCustomTimeInput(){
+    const parsed = parseTimeInput(customTimeEl.value);
+    if (parsed === null){
+      customTimeEl.value = fmt(totalSeconds); // revert on bad input
+      return;
+    }
+    eggBtns.forEach(b => b.classList.remove('active'));
+    setTotal(parsed);
+  }
+
+  customTimeEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter'){
+      e.preventDefault();
+      applyCustomTimeInput();
+      customTimeEl.blur();
+    }
+  });
+  customTimeEl.addEventListener('blur', applyCustomTimeInput);
 
   let audioCtx = null;
   function getCtx(){
@@ -657,6 +722,9 @@
     scene.classList.add('running');
     startBtn.textContent = 'Đang luộc…';
     startBtn.disabled = true;
+    customTimeEl.disabled = true;
+    minusBtn.disabled = true;
+    plusBtn.disabled = true;
     timeStateEl.textContent = 'Đang luộc';
     messageEl.textContent = '';
     messageEl.classList.remove('done');
@@ -670,6 +738,9 @@
     scene.classList.remove('running');
     startBtn.textContent = 'Bắt đầu luộc';
     startBtn.disabled = false;
+    customTimeEl.disabled = false;
+    minusBtn.disabled = false;
+    plusBtn.disabled = false;
     clearInterval(timerId);
   }
 
